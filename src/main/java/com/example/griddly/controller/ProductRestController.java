@@ -25,38 +25,54 @@ public class ProductRestController {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private StorageSlotRepository storageSlotRepository;
+
     @Autowired
     private ActionLogRepository actionLogRepository;
+
     @GetMapping
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
-//@GetMapping("/ping")
-//public String ping() {
-//    return "Backend working ";
-//}
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(@RequestBody ProductRequest request) {
-        User staff = userRepository.findById(request.getUserId()).orElseThrow();
+        if (request.getUserId() == null) {
+            return ResponseEntity.badRequest().body("User ID is required");
+        }
+
+        // Try to find the user
+        User staff = userRepository.findById(request.getUserId())
+                .orElse(null);
+
+        if (staff == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+
+        // Create and save product
         Product product = Product.builder()
                 .productName(request.getProductName())
                 .quantity(request.getQuantity())
                 .addedBy(staff)
                 .build();
         productRepository.save(product);
-        System.out.println(storageSlotRepository
-                .findByAisleNumberAndTierNumber(request.getAisle(), request.getTier()));
-        System.out.println("Looking for slot at aisle " + request.getAisle() + ", tier " + request.getTier());
+
+        // Get and update storage slot
         StorageSlot slot = storageSlotRepository
                 .findByAisleNumberAndTierNumber(request.getAisle(), request.getTier())
-                .orElseThrow(() -> new RuntimeException("Slot not found"));
+                .orElse(null);
+
+        if (slot == null) {
+            return ResponseEntity.status(404).body("Storage slot not found");
+        }
+
         slot.setProduct(product);
         slot.setIsOccupied(true);
         storageSlotRepository.save(slot);
 
+        // Log the action
         ActionLog log = ActionLog.builder()
                 .user(staff)
                 .product(product)
@@ -67,11 +83,10 @@ public class ProductRestController {
 
         return ResponseEntity.ok("Product added.");
     }
+
     @GetMapping("/slots")
     public List<StorageSlot> getAllSlots() {
+
         return storageSlotRepository.findAll();
     }
-
-
 }
-

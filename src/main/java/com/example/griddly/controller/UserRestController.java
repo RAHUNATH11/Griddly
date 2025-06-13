@@ -1,12 +1,10 @@
 package com.example.griddly.controller;
-
 import com.example.griddly.entity.User;
 import com.example.griddly.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -36,19 +34,17 @@ public class UserRestController {
             User dbUser = existingUser.get();
 
             boolean isPasswordMatch = dbUser.getPassword().equals(user.getPassword());
-            boolean isRoleMatch = dbUser.getRole() == user.getRole(); // match role from request
+            boolean isRoleMatch = dbUser.getRole() == user.getRole();
 
             if (isPasswordMatch && isRoleMatch) {
-                // ✅ Return role-based info
                 Map<String, Object> response = new HashMap<>();
+                response.put("userId", dbUser.getUserId()); // ✅ this line was missing
                 response.put("userName", dbUser.getUserName());
                 response.put("email", dbUser.getEmail());
                 response.put("role", dbUser.getRole());
                 return ResponseEntity.ok(response);
             }
         }
-
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email, password, or role");
     }
-
 }
