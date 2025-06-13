@@ -15,7 +15,7 @@ public class ProductRequest {
         return quantityToPick;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantityToPick = quantity;
-    }
+//    public void setQuantity(int quantity) {
+//        this.quantityToPick = quantity;
+//    }
 }
