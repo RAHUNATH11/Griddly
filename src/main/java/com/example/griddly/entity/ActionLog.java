@@ -32,6 +32,10 @@ public class ActionLog {
 
     private String description;
 
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
+
     public enum Action {
         ADDED,
         PICKED

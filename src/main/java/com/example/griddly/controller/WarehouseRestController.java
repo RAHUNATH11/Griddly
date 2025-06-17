@@ -7,6 +7,7 @@ import com.example.griddly.repository.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,39 +51,55 @@ public class WarehouseRestController {
         return savedWarehouse;
     }
     @GetMapping("/report")
-    public Map<String, Object> getSlotReport() {
-        List<StorageSlot> allSlots = storageSlotRepository.findAll();
+    public List<Map<String, Object>> getReportsByWarehouse() {
+        List<Warehouse> warehouses = warehouseRepository.findAll();
+        List<Map<String, Object>> reports = new ArrayList<>();
 
-        long occupied = allSlots.stream().filter(StorageSlot::getIsOccupied).count();
-        long available = allSlots.size() - occupied;
+        for (Warehouse warehouse : warehouses) {
+            List<StorageSlot> slots = storageSlotRepository.findByWarehouse_WarehouseId(warehouse.getWarehouseId());
+
+            long occupied = slots.stream().filter(StorageSlot::getIsOccupied).count();
+            long available = slots.size() - occupied;
+
+            Map<String, Object> report = new HashMap<>();
+            report.put("warehouseId", warehouse.getWarehouseId());
+            report.put("warehouseName", warehouse.getWarehouseName());
+            report.put("totalSlots", slots.size());
+            report.put("occupiedSlots", occupied);
+            report.put("availableSlots", available);
+            report.put("totalAisles", slots.stream().map(StorageSlot::getAisleNumber).distinct().count());
+            report.put("totalTiers", slots.stream().map(StorageSlot::getTierNumber).distinct().count());
+
+            reports.add(report);
+        }
+
+        return reports;
+    }
+    @GetMapping("/report/{warehouseId}")
+    public Map<String, Object> getSlotReportByWarehouse(@PathVariable Long warehouseId) {
+        List<StorageSlot> slots = storageSlotRepository.findByWarehouse_WarehouseId(warehouseId);
+
+        long occupied = slots.stream().filter(StorageSlot::getIsOccupied).count();
+        long available = slots.size() - occupied;
 
         Map<String, Object> report = new HashMap<>();
-        report.put("totalSlots", allSlots.size());
+        report.put("totalSlots", slots.size());
         report.put("occupiedSlots", occupied);
         report.put("availableSlots", available);
-        report.put("totalAisles", allSlots.stream().map(StorageSlot::getAisleNumber).distinct().count());
-        report.put("totalTiers", allSlots.stream().map(StorageSlot::getTierNumber).distinct().count());
-
-        // Slot details with product info
-        List<Map<String, Object>> details = allSlots.stream().map(slot -> {
-            Map<String, Object> s = new HashMap<>();
-            s.put("aisleNumber", slot.getAisleNumber());
-            s.put("tierNumber", slot.getTierNumber());
-            s.put("occupied", slot.getIsOccupied());
-            if (slot.getProduct() != null) {
-                s.put("product", Map.of(
-                        "productName", slot.getProduct().getProductName(),
-                        "quantity", slot.getProduct().getQuantity()
-                ));
-            } else {
-                s.put("product", null);
-            }
-            return s;
-        }).toList();
-
-        report.put("details", details);
         return report;
     }
+
+
+    @GetMapping("/all")
+    public List<Warehouse> getAll() {
+        return warehouseRepository.findAll();
+    }
+    @GetMapping("/{id}")
+    public Warehouse getWarehouseById(@PathVariable Long id) {
+        return warehouseRepository.findById(id).orElse(null);
+    }
+
+
 //
 ////
 //    @PostMapping("/create")

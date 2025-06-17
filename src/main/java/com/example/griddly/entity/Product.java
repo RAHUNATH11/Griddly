@@ -27,6 +27,10 @@ public class Product {
     @JoinColumn(name = "added_by")
     private User addedBy;
 
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id")
+    private Warehouse warehouse;
+
     @PrePersist
     public void prePersist() {
         dateAdded = LocalDateTime.now();

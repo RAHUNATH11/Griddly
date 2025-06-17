@@ -24,6 +24,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id", nullable = true)
+    private Warehouse warehouse;
+
     public enum Role {
         ADMIN,
         STAFF
